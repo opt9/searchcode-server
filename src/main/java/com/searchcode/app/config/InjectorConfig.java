@@ -36,6 +36,7 @@ public class InjectorConfig extends AbstractModule {
             LOGGER.info("Using SQLITE database");
         }
         else {
+            // Technically this is never used
             bind(IDatabaseConfig.class).to(DatabaseConfig.class);
             LOGGER.info("Using alternative database");
         }

@@ -18,6 +18,7 @@ public class SQLiteDatabaseConfig implements IDatabaseConfig {
 
     private Connection connection = null;
 
+    @Override
     public synchronized Connection getConnection() throws SQLException {
         try {
             if(connection == null || connection.isClosed()) {

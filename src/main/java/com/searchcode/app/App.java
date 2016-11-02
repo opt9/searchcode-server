@@ -13,6 +13,9 @@ package com.searchcode.app;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.sangupta.pepmint.HtmlFormatter;
+import com.sangupta.pepmint.Lexer;
+import com.sangupta.pepmint.Pepmint;
 import com.searchcode.app.config.InjectorConfig;
 import com.searchcode.app.config.Values;
 import com.searchcode.app.dao.Api;
@@ -1256,6 +1259,44 @@ public class App {
             map.put("logoImage", getLogo());
             map.put("isCommunity", ISCOMMUNITY);
             return new ModelAndView(map, "coderesult.ftl");
+        }, new FreeMarkerEngine());
+
+        get("/filetest/:codeid/:reponame/*", (request, response) -> {
+            Map<String, Object> map = new HashMap<>();
+
+            CodeSearcher cs = new CodeSearcher();
+            Cocomo2 coco = new Cocomo2();
+
+            String fileName = Values.EMPTYSTRING;
+            if(request.splat().length != 0) {
+                fileName = request.splat()[0];
+            }
+
+            String codeId = request.params(":codeid");
+            CodeResult codeResult = cs.getByCodeId(codeId);
+
+
+            List<String> codeLines = codeResult.code;
+            StringBuilder code = new StringBuilder();
+
+            for(String line: codeLines) {
+                code.append(line).append("\r\n");
+            }
+
+            // must be an empty string at the least
+            String formatterParams = "";
+
+            Pepmint pepmint = new Pepmint();
+            Lexer lexer = pepmint.newLexer("java");
+            HtmlFormatter formatter = pepmint.newHtmlFormatter(formatterParams);
+
+            String formattedCode = pepmint.highlight(code.toString(), lexer, formatter);
+            map.put("code", formattedCode);
+
+
+            map.put("logoImage", getLogo());
+            map.put("isCommunity", ISCOMMUNITY);
+            return new ModelAndView(map, "coderesulttest.ftl");
         }, new FreeMarkerEngine());
 
 

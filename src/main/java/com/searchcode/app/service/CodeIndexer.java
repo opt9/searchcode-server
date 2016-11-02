@@ -10,12 +10,10 @@
 
 package com.searchcode.app.service;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.searchcode.app.config.InjectorConfig;
 import com.searchcode.app.config.Values;
 import com.searchcode.app.dao.Data;
 import com.searchcode.app.dto.CodeIndexDocument;
+import com.searchcode.app.dto.searchcode.Code;
 import com.searchcode.app.util.CodeAnalyzer;
 import com.searchcode.app.util.Helpers;
 import com.searchcode.app.util.Properties;
@@ -352,6 +350,7 @@ public class CodeIndexer {
                 // Extra metadata in this case when it was last indexed
                 doc.add(new LongField(Values.MODIFIED, new Date().getTime(), Field.Store.YES));
 
+                // TODO the path needs to be unique per document
                 writer.updateDocument(new Term(Values.PATH, codeIndexDocument.getRepoLocationRepoNameLocationFilename()), facetsConfig.build(taxoWriter, doc));
 
                 count++;
@@ -391,5 +390,51 @@ public class CodeIndexer {
         queue.add(codeIndexDocument);
         indexTimeDocuments(queue);
         queue = null;
+    }
+
+
+    public static synchronized void indexSearchcodeDocument(Code code) throws IOException {
+        Directory dir = FSDirectory.open(Paths.get("./index/searchcode/"));
+        Directory facetsdir = FSDirectory.open(Paths.get("./index/searchcode/facets/"));
+
+        Analyzer analyzer = new CodeAnalyzer();
+        IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+        FacetsConfig facetsConfig = new FacetsConfig();
+        SearchcodeLib scl = new SearchcodeLib();
+
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+
+        IndexWriter writer = new IndexWriter(dir, iwc);
+        TaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(facetsdir);
+
+
+        try {
+            Document doc = new Document();
+            // Id is the primary key for documents
+            // needs to include repo location, project name and then filepath including file
+            Field pathField = new StringField("id", "" + code.id, Field.Store.YES);
+            doc.add(pathField);
+
+            StringBuilder indexContents = new StringBuilder();
+
+            indexContents.append(scl.splitKeywords(code.content));
+            indexContents.append(scl.codeCleanPipeline(code.content));
+            indexContents.append(scl.findInterestingKeywords(code.content));
+            String toIndex = indexContents.toString().toLowerCase();
+
+            doc.add(new TextField(Values.CONTENTS, toIndex, Field.Store.NO));
+
+            writer.updateDocument(new Term("id", "" + code.id), facetsConfig.build(taxoWriter, doc));
+
+        }
+        finally {
+            try {
+                writer.close();
+            }
+            finally {
+                taxoWriter.close();
+            }
+            Singleton.getLogger().info("Closing writers");
+        }
     }
 }

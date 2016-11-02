@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 import com.searchcode.app.config.Values;
 import com.searchcode.app.dao.IRepo;
 import com.searchcode.app.jobs.*;
+import com.searchcode.app.jobs.searchcode.IndexSearchcodeJob;
 import com.searchcode.app.model.RepoResult;
 import com.searchcode.app.util.Helpers;
 import com.searchcode.app.util.LoggerWrapper;
@@ -287,8 +288,22 @@ public class JobService implements IJobService {
                                     .repeatForever()
                     )
                     .build();
-
             scheduler.scheduleJob(job, trigger);
+
+            // Setup the indexer which runs forever indexing
+            JobDetail job2 = newJob(IndexSearchcodeJob.class)
+                    .withIdentity("searchcodeindexerjob")
+                    .build();
+
+            SimpleTrigger trigger2 = newTrigger()
+                    .withIdentity("searchcodeindexerjob")
+                    .withSchedule(simpleSchedule()
+                                    .withIntervalInSeconds(this.INDEXTIME)
+                                    .repeatForever()
+                    )
+                    .build();
+            scheduler.scheduleJob(job2, trigger2);
+
             scheduler.start();
         } catch(SchedulerException ex) {
             LOGGER.severe(" caught a " + ex.getClass() + "\n with message: " + ex.getMessage());
