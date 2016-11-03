@@ -119,7 +119,7 @@ public class CodeIndexer {
 
     /**
      * Deletes a file from the index given its location
-     * TODO I don't think this clears anything from the facets, which it should
+     * TODO I don't think this clears anything from the facets, which it should OR null them out
      */
     public static synchronized void deleteByFileLocationFilename(String fileLocationFilename) throws IOException {
         Directory dir = FSDirectory.open(Paths.get(Properties.getProperties().getProperty(Values.INDEXLOCATION, Values.DEFAULTINDEXLOCATION)));

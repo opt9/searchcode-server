@@ -15,6 +15,11 @@ public class IndexSearchcodeJob implements Job {
             return;
         }
 
+        while(CodeIndexer.shouldPauseAdding()) {
+            Singleton.getLogger().info("Pausing parser.");
+            return;
+        }
+
         try {
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
@@ -22,8 +27,7 @@ public class IndexSearchcodeJob implements Job {
             CodeDAO codeDAO = new CodeDAO();
 
             for(Code code: codeDAO.getAllCode()) {
-                Singleton.getLogger().info(code.id + " " +code.location);
-
+                Singleton.getLogger().info(code.id + " " + code.location);
                 CodeIndexer.indexSearchcodeDocument(code);
             }
 

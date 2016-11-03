@@ -298,7 +298,7 @@ public class JobService implements IJobService {
             SimpleTrigger trigger2 = newTrigger()
                     .withIdentity("searchcodeindexerjob")
                     .withSchedule(simpleSchedule()
-                                    .withIntervalInSeconds(this.INDEXTIME)
+                                    .withIntervalInSeconds(60)
                                     .repeatForever()
                     )
                     .build();
